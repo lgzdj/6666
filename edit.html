@@ -53,7 +53,7 @@
 </head>
 <body>
 <div class="bar">
-  <h1 id="title">＋ 添加转账</h1>
+  <h1 id="page-title">＋ 添加转账</h1>
   <a href="admin.html">← 返回列表</a>
 </div>
 
@@ -99,7 +99,7 @@
 <script src="common.js"></script>
 <script>
   var id = WT.qs('id');
-  if (id) document.getElementById('title').textContent = '✏️ 编辑转账';
+  if (id) document.getElementById('page-title').textContent = '✏️ 编辑转账';
 
   // 时间默认值
   if (!document.getElementById('time').value) {
