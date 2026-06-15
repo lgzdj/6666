@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>微信转账</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f4f5f7;
+    color: #1f1f1f;
+    min-height: 100vh;
+    text-align: center;
+  }
+  .page-title {
+    background: #fff;
+    font-size: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid #eee;
+  }
+
+  /* -------- 状态 1: 待确认收款 -------- */
+  .pending-wrap { padding-top: 48px; }
+  .clock {
+    width: 68px; height: 68px; margin: 0 auto 14px;
+    border: 2px solid #c9c9c9; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px; color: #999;
+  }
+  .pending-wrap .label { font-size: 14px; color: #888; margin-bottom: 12px; }
+  .pending-wrap .amount { font-size: 34px; font-weight: 600; color: #1f1f1f; }
+  .pending-wrap .time { font-size: 13px; color: #888; margin-top: 8px; }
+  .btn-green {
+    display: inline-block; width: 82%; margin-top: 28px;
+    padding: 14px 0; background: #07c160; color: #fff;
+    border: none; border-radius: 8px; font-size: 16px; font-weight: 600;
+    cursor: pointer; box-shadow: 0 4px 12px rgba(7,193,96,0.3);
+  }
+  .pending-wrap .warn {
+    margin-top: 14px; font-size: 11px; color: #b0b0b0;
+  }
+
+  /* -------- 弹层 (从底部上移的详情) -------- */
+  .mask {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    z-index: 50;
+  }
+  .mask.show { display: block; }
+  .sheet {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: #fff;
+    border-radius: 14px 14px 0 0;
+    padding: 24px 20px 28px;
+    transform: translateY(100%);
+    transition: transform .25s ease-out;
+    z-index: 60;
+  }
+  .mask.show .sheet { transform: translateY(0); }
+  .sheet .title-row {
+    display: flex; justify-content: center; align-items: center;
+    padding-bottom: 10px;
+  }
+  .sheet .title-row .icon {
+    width: 36px; height: 36px;
+    border-radius: 50%; background: #f2a73c; color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: bold;
+    margin-right: 10px;
+  }
+  .sheet .title-row .t { font-size: 14px; color: #1f1f1f; }
+  .sheet .amount { font-size: 28px; font-weight: 600; margin: 12px 0 18px; }
+  .info {
+    text-align: left;
+    font-size: 13px; color: #333;
+    border-top: 1px solid #f2f2f2;
+    padding: 12px 0;
+  }
+  .info .row { display: flex; justify-content: space-between; padding: 5px 0; }
+  .info .row .k { color: #999; }
+  .btn-big-green {
+    width: 100%; padding: 15px;
+    background: #07c160; color: #fff;
+    border: none; border-radius: 8px;
+    font-size: 16px; font-weight: 600;
+    margin-top: 18px; cursor: pointer;
+  }
+
+  /* -------- 状态 2: 已收款成功 -------- */
+  .done-wrap { padding-top: 80px; }
+  .check {
+    width: 88px; height: 88px; margin: 0 auto 20px;
+    background: #07c160; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 48px;
+    box-shadow: 0 10px 30px rgba(7,193,96,0.35);
+  }
+  .done-wrap .label { font-size: 15px; color: #333; margin-bottom: 14px; }
+  .done-wrap .amount { font-size: 34px; font-weight: 600; color: #1f1f1f; }
+  .done-wrap .info-box {
+    margin: 26px auto 0; max-width: 360px;
+    background: #fff; border-radius: 10px;
+    padding: 14px 16px; text-align: left;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .done-wrap .info-box .row {
+    display: flex; justify-content: space-between;
+    padding: 6px 0; font-size: 13px;
+  }
+  .done-wrap .info-box .k { color: #888; }
+  .done-wrap .info-box .v { color: #333; }
+  .btn-close {
+    margin-top: 22px; background: #fff; color: #07c160;
+    border: 1px solid #f0f0f0; width: 70%; padding: 12px;
+    border-radius: 8px; font-size: 15px; cursor: pointer;
+  }
+
+  .loading, .error { padding: 40px 20px; color: #999; font-size: 13px; text-align: center; }
+  .err { color: #d4380d; }
+</style>
+</head>
+<body>
+<div class="page-title">微信转账</div>
+<div id="main">
+  <div class="loading">加载中...</div>
+</div>
+
+<!-- 底部详情弹层 -->
+<div class="mask" id="mask">
+  <div class="sheet" id="sheet">
+    <div class="title-row">
+      <div class="icon">¥</div>
+      <div class="t" id="s_type">微信商家转账</div>
+    </div>
+    <div class="amount" id="s_amount">¥0.00</div>
+    <div class="info">
+      <div class="row"><span class="k">转账类型</span><span id="s_ttype">微信商家转账</span></div>
+      <div class="row"><span class="k">转账备注</span><span id="s_remark">活动奖励</span></div>
+      <div class="row"><span class="k">收款方式</span><span id="s_pay">零钱</span></div>
+    </div>
+    <button class="btn-big-green" id="btn_confirm2">确认收款</button>
+  </div>
+</div>
+
+<script src="common.js"></script>
+<script>
+  var id = WT.qs('id');
+  var currentItem = null;
+
+  function render_pending(it){
+    return '<div class="pending-wrap">'
+         + '<div class="clock">⏰</div>'
+         + '<div class="label">待确认收款</div>'
+         + '<div class="amount">' + (it.title || '') + '</div>'
+         + '<div class="time">转账时间 ' + (it.time || '') + '</div>'
+         + '<button class="btn-green" id="btn_confirm">确认收款</button>'
+         + '<div class="warn">1天内未确认，将退还给对方。退还</div>'
+         + '</div>';
+  }
+
+  function render_done(it){
+    return '<div class="done-wrap">'
+         + '<div class="check">✓</div>'
+         + '<div class="label">你已收款，资金已存入零钱</div>'
+         + '<div class="amount">' + (it.title || '') + '</div>'
+         + '<div class="info-box">'
+         + '  <div class="row"><span class="k">转账时间</span><span class="v">' + (it.time || '') + '</span></div>'
+         + '  <div class="row"><span class="k">收款时间</span><span class="v">' + (it.received_time || WT.nowLocal()) + '</span></div>'
+         + '</div>'
+         + '<button class="btn-close" id="btn_close">关闭</button>'
+         + '</div>';
+  }
+
+  function render(){
+    if (!currentItem) return;
+    var main = document.getElementById('main');
+    if (currentItem.received) {
+      main.innerHTML = render_done(currentItem);
+      setTimeout(function(){
+        var c = document.getElementById('btn_close');
+        if (c) c.onclick = function(){ try { window.close(); } catch(e){} history.length > 1 ? history.back() : null; };
+      }, 50);
+    } else {
+      main.innerHTML = render_pending(currentItem);
+      setTimeout(function(){
+        var b = document.getElementById('btn_confirm');
+        if (b) b.onclick = function(){ show_sheet(); };
+      }, 50);
+    }
+  }
+
+  function show_sheet(){
+    var t = document.getElementById('s_type');      if (t) t.textContent = currentItem.transfer_type || '微信商家转账';
+    var a = document.getElementById('s_amount');    if (a) a.textContent = currentItem.title || '';
+    document.getElementById('s_ttype').textContent  = currentItem.transfer_type || '微信商家转账';
+    document.getElementById('s_remark').textContent = currentItem.remark || '活动奖励';
+    document.getElementById('s_pay').textContent    = currentItem.pay_method || '零钱';
+    document.getElementById('mask').classList.add('show');
+    document.getElementById('btn_confirm2').onclick = function(){ do_confirm(); };
+  }
+  function hide_sheet(){ document.getElementById('mask').classList.remove('show'); }
+
+  function do_confirm(){
+    // 发送确认请求，并把用户手机当前时间作为收款时间
+    WT.api('confirm', { id: currentItem.id, received_time: WT.nowLocal() }, function(res){
+      if (!res.ok) { alert(res.error || '确认失败'); return; }
+      currentItem = res.item;
+      hide_sheet();
+      render();
+    });
+  }
+
+  function load(){
+    if (!id) { document.getElementById('main').innerHTML = '<div class="error err">缺少参数 id</div>'; return; }
+    try {
+      WT.api('get', { id: id }, function(res){
+        if (!res.ok) {
+          document.getElementById('main').innerHTML = '<div class="error err">' + (res.error || '加载失败') + '</div>';
+          return;
+        }
+        currentItem = res.item;
+        render();
+      });
+    } catch(e){
+      document.getElementById('main').innerHTML = '<div class="error err">异常：' + e.message + '</div>';
+    }
+  }
+
+  load();
+</script>
+</body>
+</html>

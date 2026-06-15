@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>登录 · 微信转账模拟</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #07c160 0%, #06ad56 100%);
+    min-height: 100vh;
+    padding: 40px 16px;
+    color: #333;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px 24px;
+    max-width: 400px;
+    margin: 40px auto;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  }
+  h1 { font-size: 22px; text-align: center; margin-bottom: 8px; color: #1f1f1f; }
+  .sub { text-align: center; color: #999; font-size: 13px; margin-bottom: 24px; }
+  label { display: block; font-size: 14px; color: #333; margin: 12px 0 6px; }
+  input {
+    width: 100%; padding: 12px 14px;
+    border: 1px solid #ddd; border-radius: 10px;
+    font-size: 15px; outline: none;
+    -webkit-appearance: none;
+  }
+  input:focus { border-color: #07c160; }
+  button {
+    width: 100%; padding: 14px;
+    background: #07c160; color: #fff;
+    border: none; border-radius: 10px;
+    font-size: 16px; font-weight: 600;
+    margin-top: 20px; cursor: pointer;
+    box-shadow: 0 6px 14px rgba(7,193,96,0.3);
+  }
+  button:active { transform: scale(0.98); }
+  .tip {
+    margin-top: 18px; padding: 10px 12px;
+    background: #fffbe6; border: 1px solid #ffe58f;
+    border-radius: 8px; font-size: 12px; color: #874d00;
+    line-height: 1.7;
+  }
+  .msg { margin-top: 12px; font-size: 13px; text-align: center; }
+  .msg.ok { color: #07c160; }
+  .msg.err { color: #d4380d; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>微信转账模拟 · 后台</h1>
+  <p class="sub">请登录后管理转账记录</p>
+
+  <label>账号</label>
+  <input id="user" type="text" placeholder="admin" autocomplete="username">
+
+  <label>密码</label>
+  <input id="pass" type="password" placeholder="admin123" autocomplete="current-password">
+
+  <button id="btn">登 录</button>
+  <div class="msg" id="msg"></div>
+
+  <div class="tip">
+    <b>默认账号：</b>admin / admin123<br>
+    <b>本地运行：</b>在项目目录执行 <code>php -S 0.0.0.0:8080</code>，然后打开 http://127.0.0.1:8080/index.html
+  </div>
+</div>
+
+<script src="common.js"></script>
+<script>
+  var msg = document.getElementById('msg');
+  document.getElementById('btn').onclick = function(){
+    var user = document.getElementById('user').value.trim();
+    var pass = document.getElementById('pass').value;
+    if (!user || !pass) { msg.textContent = '请填写账号和密码'; msg.className='msg err'; return; }
+    msg.textContent = '登录中...'; msg.className = 'msg';
+    WT.api('login', { user: user, pass: pass }, function(res){
+      if (res.ok) {
+        msg.textContent = '✓ 登录成功，正在跳转...'; msg.className = 'msg ok';
+        setTimeout(function(){ location.href = 'admin.html'; }, 400);
+      } else {
+        msg.textContent = '✗ ' + (res.error || '登录失败'); msg.className = 'msg err';
+      }
+    });
+  };
+  document.getElementById('pass').addEventListener('keydown', function(e){
+    if (e.key === 'Enter') document.getElementById('btn').click();
+  });
+</script>
+</body>
+</html>
