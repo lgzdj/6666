@@ -18,8 +18,14 @@ if (!file_exists(DATA_FILE)) {
         'admins' => [DEFAULT_ADMIN],
         'items'  => []
     ];
-    file_put_contents(DATA_FILE, json_encode($init, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-    chmod(DATA_FILE, 0666);
+    $result = file_put_contents(DATA_FILE, json_encode($init, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+    if ($result === false) {
+        die(json_encode(['ok' => false, 'error' => '无法创建数据文件，请检查目录权限']));
+    }
+    // Windows不支持chmod，跳过
+    if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
+        @chmod(DATA_FILE, 0666);
+    }
 }
 
 // ---- 读/写 ----
@@ -30,7 +36,10 @@ function read_data() {
 }
 
 function write_data($data) {
-    file_put_contents(DATA_FILE, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+    $result = file_put_contents(DATA_FILE, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+    if ($result === false) {
+        die(json_encode(['ok' => false, 'error' => '无法写入数据文件，请检查 data.json 权限']));
+    }
 }
 
 // ---- Session ----
