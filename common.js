@@ -31,7 +31,7 @@
         }
       };
       xhr.onerror = function(){
-        cb && cb({ ok: false, error: '网络连接失败，请检查 PHP 服务是否启动' });
+        cb && cb({ ok: false, error: '网络连接失败，请检查PHP服务是否启动' });
       };
       xhr.send(body.join('&'));
     } catch (e) {

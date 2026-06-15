@@ -2,153 +2,766 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>转账列表</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>微信转账系统 - 管理后台</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-    background: #f3f3f3;
-    min-height: 100vh;
-    color: #333;
-  }
-  .bar {
-    background: #fff;
-    padding: 14px 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #eee;
-    position: sticky; top: 0; z-index: 10;
-  }
-  .bar h1 { font-size: 17px; color: #1f1f1f; }
-  .bar .r { font-size: 12px; color: #666; }
-  .bar .r a { color: #07c160; text-decoration: none; margin-left: 10px; }
-  .add-row { padding: 14px 16px 8px; }
-  .btn {
-    display: inline-block; padding: 11px 18px;
-    background: #07c160; color: #fff; border: none;
-    border-radius: 10px; font-size: 14px; font-weight: 600;
-    cursor: pointer; text-decoration: none;
-    box-shadow: 0 4px 10px rgba(7,193,96,0.25);
-  }
-  .btn.alt { background: #f0f0f0; color: #333; box-shadow: none; }
-  .list { padding: 0 16px 60px; }
-  .item {
-    background: #fff; border-radius: 12px;
-    padding: 14px; margin-bottom: 10px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-  }
-  .item .title { font-size: 17px; font-weight: 600; color: #1f1f1f; }
-  .item .desc { font-size: 13px; color: #666; margin-top: 4px; }
-  .item .time { font-size: 12px; color: #999; margin-top: 6px; }
-  .tag {
-    display: inline-block; padding: 2px 8px;
-    border-radius: 4px; font-size: 11px; margin-left: 6px;
-  }
-  .tag.pending { background: #fff7e6; color: #d48806; }
-  .tag.done { background: #f6ffed; color: #389e0d; }
-  .ops { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
-  .op {
-    flex: 1; text-align: center; padding: 8px;
-    background: #f5f5f5; color: #333;
-    border-radius: 6px; font-size: 12px;
-    text-decoration: none; cursor: pointer;
-    min-width: 60px;
-  }
-  .op.green { background: #07c160; color: #fff; }
-  .op.red { background: #fff1f0; color: #cf1322; }
-  .empty {
-    text-align: center; padding: 60px 20px;
-    color: #999; font-size: 14px;
-  }
-  .share-box {
-    margin-top: 10px; padding: 10px;
-    background: #f9f9f9; border-radius: 8px;
-    font-size: 11px; word-break: break-all; color: #666;
-  }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", Helvetica, sans-serif;
+  background: #f5f5f5;
+  color: #1f1f1f;
+  min-height: 100vh;
+}
+/* 顶部导航 */
+.header {
+  background: #fff;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e5e5e5;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header h1 { font-size: 17px; font-weight: 600; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.user-info { font-size: 13px; color: #888; }
+.user-info .role { 
+  background: #07c160; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 11px;
+}
+.user-info .role.admin { background: #ff6b00; }
+.btn-logout {
+  background: #f5f5f5; border: none; padding: 6px 12px;
+  border-radius: 6px; font-size: 12px; color: #666; cursor: pointer;
+}
+/* 统计卡片 */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, #07c160 0%, #06ad56 100%);
+}
+.stat-card {
+  background: rgba(255,255,255,0.2);
+  border-radius: 12px;
+  padding: 14px;
+  text-align: center;
+  color: #fff;
+}
+.stat-card .num { font-size: 24px; font-weight: 700; }
+.stat-card .label { font-size: 12px; opacity: 0.9; margin-top: 4px; }
+/* 标签切换 */
+.tabs {
+  background: #fff;
+  display: flex;
+  border-bottom: 1px solid #e5e5e5;
+}
+.tab {
+  flex: 1;
+  padding: 14px;
+  text-align: center;
+  font-size: 14px;
+  color: #888;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.tab.active { 
+  color: #07c160; 
+  border-bottom-color: #07c160;
+  font-weight: 600;
+}
+/* 内容区 */
+.content { padding: 16px; }
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #333;
+}
+/* 会员卡片 */
+.member-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.member-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.member-name { font-size: 15px; font-weight: 600; }
+.member-meta { font-size: 12px; color: #888; }
+.status-badge {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+.status-badge.active { background: #e6fff5; color: #07c160; }
+.status-badge.disabled { background: #fff2e6; color: #ff6b00; }
+.member-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: #666;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+.member-stats span { color: #07c160; font-weight: 600; }
+.member-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.btn-small {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: center;
+}
+.btn-small.danger { color: #d4380d; border-color: #ffccc7; background: #fff2f0; }
+.btn-small.primary { color: #07c160; border-color: #b7eb8f; background: #f6ffed; }
+/* 转账卡片 */
+.transfer-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.transfer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.transfer-amount { font-size: 20px; font-weight: 700; color: #1f1f1f; }
+.transfer-status {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+.transfer-status.done { background: #e6fff5; color: #07c160; }
+.transfer-status.pending { background: #fff7e6; color: #fa8c16; }
+.transfer-info { font-size: 13px; color: #888; }
+.transfer-owner { font-size: 12px; color: #999; margin-top: 8px; }
+.transfer-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+/* 筛选器 */
+.filter-bar {
+  background: #fff;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.filter-bar select {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #fff;
+}
+/* 添加按钮 */
+.btn-add {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 54px;
+  height: 54px;
+  background: linear-gradient(135deg, #07c160 0%, #06ad56 100%);
+  border-radius: 50%;
+  border: none;
+  color: #fff;
+  font-size: 28px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(7,193,96,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* 空状态 */
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+  font-size: 14px;
+}
+/* 弹窗 */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal.show { display: flex; }
+.modal-content {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 360px;
+  padding: 24px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.modal-title {
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.form-item {
+  margin-bottom: 16px;
+}
+.form-item label {
+  display: block;
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 6px;
+}
+.form-item input, .form-item select, .form-item textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.form-item textarea { resize: vertical; min-height: 60px; }
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+.btn-modal {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  border: none;
+}
+.btn-modal.cancel { background: #f5f5f5; color: #666; }
+.btn-modal.submit { background: #07c160; color: #fff; }
+/* 会员管理区域 */
+.member-section { display: none; }
+.member-section.active { display: block; }
+.transfer-section { display: none; }
+.transfer-section.active { display: block; }
+/* 加载 */
+.loading { text-align: center; padding: 40px; color: #999; }
 </style>
 </head>
 <body>
-<div class="bar">
-  <h1>💸 转账记录</h1>
-  <div class="r"><span id="user"></span><a href="javascript:;" id="logout">退出</a></div>
+
+<!-- 顶部导航 -->
+<div class="header">
+  <h1>📱 微信转账系统</h1>
+  <div class="header-right">
+    <div class="user-info">
+      <span id="userName">--</span>
+      <span class="role" id="userRole">--</span>
+    </div>
+    <button class="btn-logout" onclick="logout()">退出</button>
+  </div>
 </div>
 
-<div class="add-row">
-  <a href="edit.html" class="btn">＋ 添加转账</a>
+<!-- 统计卡片 -->
+<div class="stats">
+  <div class="stat-card">
+    <div class="num" id="statTotal">0</div>
+    <div class="label">总转账</div>
+  </div>
+  <div class="stat-card">
+    <div class="num" id="statReceived">0</div>
+    <div class="label">已收款</div>
+  </div>
+  <div class="stat-card" id="statMemberCard" style="display:none">
+    <div class="num" id="statMember">0</div>
+    <div class="label">会员数</div>
+  </div>
 </div>
 
-<div class="list" id="list"></div>
+<!-- 标签切换 -->
+<div class="tabs" id="tabs" style="display:none">
+  <div class="tab active" onclick="switchTab('member')">👥 会员管理</div>
+  <div class="tab" onclick="switchTab('transfer')">💰 转账记录</div>
+</div>
+
+<!-- 内容区 -->
+<div class="content">
+  <!-- 会员管理 -->
+  <div class="member-section active" id="memberSection">
+    <div class="section-title">会员列表</div>
+    <div id="memberList">
+      <div class="loading">加载中...</div>
+    </div>
+  </div>
+  
+  <!-- 转账记录 -->
+  <div class="transfer-section" id="transferSection">
+    <div class="filter-bar" id="filterBar" style="display:none">
+      <select id="filterUser">
+        <option value="0">全部会员</option>
+      </select>
+    </div>
+    <div id="transferList">
+      <div class="loading">加载中...</div>
+    </div>
+  </div>
+</div>
+
+<!-- 添加按钮 -->
+<button class="btn-add" id="btnAdd" onclick="showAddModal()" title="添加">+</button>
+
+<!-- 添加/编辑会员弹窗 -->
+<div class="modal" id="memberModal">
+  <div class="modal-content">
+    <div class="modal-title" id="memberModalTitle">添加会员</div>
+    <input type="hidden" id="memberId">
+    <div class="form-item">
+      <label>用户名</label>
+      <input type="text" id="memberUsername" placeholder="输入用户名">
+    </div>
+    <div class="form-item">
+      <label>昵称</label>
+      <input type="text" id="memberNickname" placeholder="输入昵称（选填）">
+    </div>
+    <div class="form-item">
+      <label>密码</label>
+      <input type="password" id="memberPassword" placeholder="输入密码">
+    </div>
+    <div class="form-item" id="memberStatusItem" style="display:none">
+      <label>状态</label>
+      <select id="memberStatus">
+        <option value="1">正常</option>
+        <option value="0">禁用</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button class="btn-modal cancel" onclick="closeMemberModal()">取消</button>
+      <button class="btn-modal submit" onclick="saveMember()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 添加/编辑转账弹窗 -->
+<div class="modal" id="transferModal">
+  <div class="modal-content">
+    <div class="modal-title" id="transferModalTitle">添加转账</div>
+    <input type="hidden" id="transferId">
+    <div class="form-item">
+      <label>金额</label>
+      <input type="text" id="transferTitle" placeholder="如 ¥99.99">
+    </div>
+    <div class="form-item">
+      <label>描述</label>
+      <input type="text" id="transferDesc" placeholder="微信商家转账">
+    </div>
+    <div class="form-item">
+      <label>转账时间</label>
+      <input type="datetime-local" id="transferTime">
+    </div>
+    <div class="form-item">
+      <label>转账类型</label>
+      <select id="transferType">
+        <option value="微信商家转账">微信商家转账</option>
+        <option value="微信红包">微信红包</option>
+        <option value="普通转账">普通转账</option>
+      </select>
+    </div>
+    <div class="form-item">
+      <label>备注</label>
+      <textarea id="transferRemark" placeholder="备注信息（选填）"></textarea>
+    </div>
+    <div class="form-item">
+      <label>收款方式</label>
+      <select id="transferPayMethod">
+        <option value="零钱">零钱</option>
+        <option value="银行卡">银行卡</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button class="btn-modal cancel" onclick="closeTransferModal()">取消</button>
+      <button class="btn-modal submit" onclick="saveTransfer()">保存</button>
+    </div>
+  </div>
+</div>
 
 <script src="common.js"></script>
 <script>
-  WT.api('me', {}, function(res){
-    if (!res.ok) {
-      document.getElementById('list').innerHTML = '<div class="empty">未登录，正在跳转...</div>';
-      setTimeout(function(){ location.href = 'index.html'; }, 800);
+// 全局变量
+var currentUser = null;
+var isAdmin = false;
+var members = [];
+
+// 初始化
+window.onload = function() {
+  loadUserInfo();
+};
+
+// 加载用户信息
+function loadUserInfo() {
+  WT.api('me', {}, function(res) {
+    if (!res.ok || !res.user) {
+      location.href = 'index.html';
       return;
     }
-    document.getElementById('user').textContent = '👋 ' + (res.user || '') + ' ';
-    load();
+    currentUser = res.user;
+    isAdmin = res.user.role === 'admin';
+    
+    document.getElementById('userName').textContent = res.user.nickname || res.user.username;
+    var roleEl = document.getElementById('userRole');
+    roleEl.textContent = isAdmin ? '管理员' : '会员';
+    roleEl.className = 'role' + (isAdmin ? ' admin' : '');
+    
+    // 显示统计
+    loadStats();
+    
+    if (isAdmin) {
+      // 管理员显示标签和会员管理
+      document.getElementById('tabs').style.display = 'flex';
+      document.getElementById('statMemberCard').style.display = 'block';
+      loadMembers();
+      loadFilterUsers();
+    } else {
+      // 会员只显示转账
+      document.getElementById('tabs').style.display = 'none';
+      switchTab('transfer');
+    }
   });
+}
 
-  document.getElementById('logout').onclick = function(){
-    WT.api('logout', {}, function(){ location.href = 'index.html'; });
-  };
-
-  function load(){
-    var list = document.getElementById('list');
-    list.innerHTML = '<div class="empty">加载中...</div>';
-    WT.api('list', {}, function(res){
-      if (!res.ok) { list.innerHTML = '<div class="empty">' + (res.error || '加载失败') + '</div>'; return; }
-      var items = res.items || [];
-      if (!items.length) { list.innerHTML = '<div class="empty">暂无记录，点右上角"添加转账"创建</div>'; return; }
-      var html = '';
-      for (var i = 0; i < items.length; i++) {
-        var it = items[i];
-        var shareUrl = location.origin + location.pathname.replace(/[^\/]+\.html$/, '') + 'share.html?id=' + it.id;
-        html += '<div class="item">'
-             + '<div class="title">' + (it.title || '')
-             + '<span class="tag ' + (it.received ? 'done' : 'pending') + '">'
-             + (it.received ? '✓ 已收款' : '⏳ 待收款') + '</span></div>'
-             + '<div class="desc">' + (it.description || '') + ' · ' + (it.transfer_type || '') + '</div>'
-             + '<div class="time">转账时间：' + (it.time || '') + (it.received && it.received_time ? '　收款时间：' + it.received_time : '') + '</div>'
-             + '<div class="ops">'
-             + '<a class="op green" href="' + shareUrl + '" target="_blank" data-url="' + shareUrl + '">🔗 复制分享链接</a>'
-             + '<a class="op" href="transfer.html?id=' + it.id + '" target="_blank">💳 预览转账页</a>'
-             + '<a class="op" href="edit.html?id=' + it.id + '">✏️ 编辑</a>'
-             + '<span class="op red" data-id="' + it.id + '">🗑 删除</span>'
-             + '</div>'
-             + '<div class="share-box">' + shareUrl + '</div>'
-             + '</div>';
+// 加载统计
+function loadStats() {
+  WT.api('stats', {}, function(res) {
+    if (res.ok) {
+      document.getElementById('statTotal').textContent = res.total || 0;
+      document.getElementById('statReceived').textContent = res.received || 0;
+      if (isAdmin) {
+        document.getElementById('statMember').textContent = res.member_count || 0;
       }
-      list.innerHTML = html;
-      list.querySelectorAll('.op.red').forEach(function(el){
-        el.onclick = function(){
-          if (!confirm('确认删除这条记录？')) return;
-          WT.api('delete', { id: el.getAttribute('data-id') }, function(r){
-            if (r.ok) load(); else alert(r.error || '删除失败');
-          });
-        };
-      });
-      list.querySelectorAll('[data-url]').forEach(function(el){
-        el.onclick = function(e){
-          e.preventDefault();
-          var url = el.getAttribute('data-url');
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(url).then(function(){
-              alert('已复制分享链接：\n' + url);
-            }, function(){
-              prompt('请手动复制以下链接：', url);
-            });
-          } else {
-            prompt('请手动复制以下链接：', url);
-          }
-        };
-      });
-    });
+    }
+  });
+}
+
+// 切换标签
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelector('.tab:nth-child(' + (tab === 'member' ? 1 : 2) + ')').classList.add('active');
+  
+  document.getElementById('memberSection').classList.toggle('active', tab === 'member');
+  document.getElementById('transferSection').classList.toggle('active', tab === 'transfer');
+  
+  // 显示/隐藏筛选器和添加按钮
+  document.getElementById('filterBar').style.display = isAdmin ? 'flex' : 'none';
+  document.getElementById('btnAdd').textContent = tab === 'member' ? '+' : '+';
+  document.getElementById('btnAdd').onclick = tab === 'member' ? showAddMemberModal : showAddTransferModal;
+  
+  if (tab === 'member') {
+    loadMembers();
+  } else {
+    loadTransfers();
   }
+}
+
+// 加载会员列表
+function loadMembers() {
+  if (!isAdmin) return;
+  
+  WT.api('member_list', {}, function(res) {
+    if (!res.ok) { alert(res.error); return; }
+    members = res.members || [];
+    renderMembers();
+  });
+}
+
+// 渲染会员列表
+function renderMembers() {
+  var el = document.getElementById('memberList');
+  if (members.length === 0) {
+    el.innerHTML = '<div class="empty">暂无会员，添加一个吧</div>';
+    return;
+  }
+  
+  var html = '';
+  members.forEach(function(m) {
+    html += '<div class="member-card">'
+      + '<div class="member-header">'
+      + '<div>'
+      + '<div class="member-name">' + (m.nickname || m.username) + '</div>'
+      + '<div class="member-meta">@' + m.username + '</div>'
+      + '</div>'
+      + '<span class="status-badge ' + (m.status == 1 ? 'active' : 'disabled') + '">' 
+      + (m.status == 1 ? '正常' : '禁用') + '</span>'
+      + '</div>'
+      + '<div class="member-stats">'
+      + '<div>转账数: <span>' + m.transfer_count + '</span></div>'
+      + '<div>已收: <span>' + m.received_count + '</span></div>'
+      + '</div>'
+      + '<div class="member-actions">'
+      + '<div class="btn-small primary" onclick="editMember(' + m.id + ')">编辑</div>'
+      + '<div class="btn-small" onclick="viewMemberTransfers(' + m.id + ')">查看</div>'
+      + '<div class="btn-small danger" onclick="deleteMember(' + m.id + ')">删除</div>'
+      + '</div>'
+      + '</div>';
+  });
+  el.innerHTML = html;
+}
+
+// 加载筛选用户下拉
+function loadFilterUsers() {
+  var html = '<option value="0">全部会员</option>';
+  members.forEach(function(m) {
+    html += '<option value="' + m.id + '">' + (m.nickname || m.username) + '</option>';
+  });
+  document.getElementById('filterUser').innerHTML = html;
+  document.getElementById('filterUser').onchange = loadTransfers;
+}
+
+// 加载转账列表
+function loadTransfers() {
+  var userId = isAdmin ? document.getElementById('filterUser').value : 0;
+  
+  WT.api('list', { user_id: userId }, function(res) {
+    if (!res.ok) { alert(res.error); return; }
+    renderTransfers(res.items || []);
+  });
+}
+
+// 渲染转账列表
+function renderTransfers(items) {
+  var el = document.getElementById('transferList');
+  if (items.length === 0) {
+    el.innerHTML = '<div class="empty">暂无转账记录</div>';
+    return;
+  }
+  
+  var html = '';
+  items.forEach(function(item) {
+    html += '<div class="transfer-card">'
+      + '<div class="transfer-header">'
+      + '<div class="transfer-amount">' + item.title + '</div>'
+      + '<span class="transfer-status ' + (item.received == 1 ? 'done' : 'pending') + '">' 
+      + (item.received == 1 ? '已收款' : '待收') + '</span>'
+      + '</div>'
+      + '<div class="transfer-info">'
+      + '<div>' + item.description + '</div>'
+      + '<div>' + item.time + '</div>'
+      + '</div>';
+    
+    if (isAdmin && item.username) {
+      html += '<div class="transfer-owner">来自会员: ' + (item.nickname || item.username) + '</div>';
+    }
+    
+    html += '<div class="transfer-actions">'
+      + '<div class="btn-small primary" onclick="copyLink(' + item.id + ')">复制链接</div>';
+    
+    if (isAdmin) {
+      html += '<div class="btn-small" onclick="editTransfer(' + item.id + ')">编辑</div>'
+        + '<div class="btn-small danger" onclick="deleteTransfer(' + item.id + ')">删除</div>';
+    }
+    
+    html += '</div></div>';
+  });
+  el.innerHTML = html;
+}
+
+// 会员操作
+function showAddMemberModal() { showAddModal(); }
+function showAddModal() {
+  if (isAdmin) {
+    showAddMemberModal();
+  } else {
+    showAddTransferModal();
+  }
+}
+
+function showAddMemberModal() {
+  document.getElementById('memberModalTitle').textContent = '添加会员';
+  document.getElementById('memberId').value = '';
+  document.getElementById('memberUsername').value = '';
+  document.getElementById('memberUsername').disabled = false;
+  document.getElementById('memberNickname').value = '';
+  document.getElementById('memberPassword').value = '';
+  document.getElementById('memberStatusItem').style.display = 'none';
+  document.getElementById('memberModal').classList.add('show');
+}
+
+function editMember(id) {
+  var m = members.find(function(x) { return x.id == id; });
+  if (!m) return;
+  
+  document.getElementById('memberModalTitle').textContent = '编辑会员';
+  document.getElementById('memberId').value = m.id;
+  document.getElementById('memberUsername').value = m.username;
+  document.getElementById('memberUsername').disabled = true;
+  document.getElementById('memberNickname').value = m.nickname || '';
+  document.getElementById('memberPassword').value = '';
+  document.getElementById('memberStatus').value = m.status;
+  document.getElementById('memberStatusItem').style.display = 'block';
+  document.getElementById('memberModal').classList.add('show');
+}
+
+function closeMemberModal() {
+  document.getElementById('memberModal').classList.remove('show');
+}
+
+function saveMember() {
+  var id = document.getElementById('memberId').value;
+  var username = document.getElementById('memberUsername').value.trim();
+  var nickname = document.getElementById('memberNickname').value.trim();
+  var password = document.getElementById('memberPassword').value;
+  var status = document.getElementById('memberStatus').value;
+  
+  if (!id && !username) { alert('用户名不能为空'); return; }
+  if (!id && !password) { alert('密码不能为空'); return; }
+  
+  var data = { username: username, nickname: nickname, status: status };
+  if (password) data.password = password;
+  
+  var action = id ? 'member_edit' : 'member_add';
+  if (id) data.id = id;
+  
+  WT.api(action, data, function(res) {
+    if (!res.ok) { alert(res.error); return; }
+    closeMemberModal();
+    loadMembers();
+    loadStats();
+    if (id) loadFilterUsers();
+  });
+}
+
+function deleteMember(id) {
+  if (!confirm('确定删除该会员？其所有转账记录也会被删除！')) return;
+  
+  WT.api('member_delete', { id: id }, function(res) {
+    if (!res.ok) { alert(res.error); return; }
+    loadMembers();
+    loadStats();
+    loadFilterUsers();
+  });
+}
+
+function viewMemberTransfers(id) {
+  document.getElementById('filterUser').value = id;
+  switchTab('transfer');
+}
+
+// 转账操作
+function showAddTransferModal() {
+  document.getElementById('transferModalTitle').textContent = '添加转账';
+  document.getElementById('transferId').value = '';
+  document.getElementById('transferTitle').value = '';
+  document.getElementById('transferDesc').value = '微信商家转账';
+  document.getElementById('transferTime').value = new Date().toISOString().slice(0, 16);
+  document.getElementById('transferTime').value = document.getElementById('transferTime').value.replace('T', ' ');
+  document.getElementById('transferType').value = '微信商家转账';
+  document.getElementById('transferRemark').value = '';
+  document.getElementById('transferPayMethod').value = '零钱';
+  document.getElementById('transferModal').classList.add('show');
+}
+
+function editTransfer(id) {
+  WT.api('get', { id: id }, function(res) {
+    if (!res.ok) { alert(res.error); return; }
+    var item = res.item;
+    
+    document.getElementById('transferModalTitle').textContent = '编辑转账';
+    document.getElementById('transferId').value = item.id;
+    document.getElementById('transferTitle').value = item.title;
+    document.getElementById('transferDesc').value = item.description;
+    document.getElementById('transferTime').value = item.time.replace('T', ' ').slice(0, 16);
+    document.getElementById('transferType').value = item.transfer_type;
+    document.getElementById('transferRemark').value = item.remark || '';
+    document.getElementById('transferPayMethod').value = item.pay_method;
+    document.getElementById('transferModal').classList.add('show');
+  });
+}
+
+function closeTransferModal() {
+  document.getElementById('transferModal').classList.remove('show');
+}
+
+function saveTransfer() {
+  var id = document.getElementById('transferId').value;
+  var title = document.getElementById('transferTitle').value.trim();
+  var description = document.getElementById('transferDesc').value.trim();
+  var time = document.getElementById('transferTime').value;
+  var transfer_type = document.getElementById('transferType').value;
+  var remark = document.getElementById('transferRemark').value.trim();
+  var pay_method = document.getElementById('transferPayMethod').value;
+  
+  if (!title) { alert('金额不能为空'); return; }
+  if (!time) { alert('时间不能为空'); return; }
+  
+  var data = {
+    title: title,
+    description: description,
+    time: time.replace('T', ' '),
+    transfer_type: transfer_type,
+    remark: remark,
+    pay_method: pay_method
+  };
+  
+  var action = id ? 'update' : 'add';
+  if (id) data.id = id;
+  
+  WT.api(action, data, function(res) {
+    if (!res.ok) { alert(res.error); return; }
+    closeTransferModal();
+    loadTransfers();
+    loadStats();
+  });
+}
+
+function deleteTransfer(id) {
+  if (!confirm('确定删除该转账记录？')) return;
+  
+  WT.api('delete', { id: id }, function(res) {
+    if (!res.ok) { alert(res.error); return; }
+    loadTransfers();
+    loadStats();
+  });
+}
+
+function copyLink(id) {
+  var url = location.origin + '/share.html?id=' + id;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(function() {
+      alert('链接已复制到剪贴板');
+    });
+  } else {
+    prompt('复制此链接:', url);
+  }
+}
+
+// 登出
+function logout() {
+  if (!confirm('确定退出登录？')) return;
+  WT.api('logout', {}, function() {
+    localStorage.removeItem('wxtransfer_user');
+    location.href = 'index.html';
+  });
+}
 </script>
 </body>
 </html>
