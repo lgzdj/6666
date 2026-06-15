@@ -95,7 +95,7 @@ switch ($action) {
 
     // ---------- 单条查询（分享页/转账页用） ----------
     case 'get': {
-        $id = intval($_GET['id'] ?? 0);
+        $id = intval($_GET['id'] ?? ($_POST['id'] ?? 0));
         $found = null;
         foreach ($data['items'] as $it) {
             if (intval($it['id']) === $id) { $found = $it; break; }
